@@ -108,6 +108,5 @@ int main (int argc, char *argv[]) {
         if (debug) { print_cpu(&main_cpu); }
         exec_inst(&main_cpu); 
     }
-
     return 0;
 }
