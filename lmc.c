@@ -1,110 +1,131 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define INST_AMT 10
+#define INST_AMT 11
+#define BUFF_LEN 32
+#define CUR_MM(c) (c->mm[c->pc])
 
-#define BUFF_LEN 16 
+typedef struct s_mbox MAILBOX;
+
+struct s_mbox {
+    int op;
+    int data;
+};
 
 typedef struct s_cpu {
-    int            *mm;
-    int             ac;
-    int             pc;
+    MAILBOX    *mm;
+    int         mem_amt;
+    int         pc;
+    int         ac;
 } CPU;
 
-typedef void (*INST_F) (CPU*, int);
+typedef void (*INST_F) (CPU*);
 
-void ADD (CPU *c, int arg) {
-    c->ac += c->mm[arg];
+void HLT (CPU *c) {
+    exit(CUR_MM(c).data);
 }
 
-void SUB (CPU *c, int arg) {
-    c->ac -= c->mm[arg];
+void ADD (CPU *c) {
+    c->ac += CUR_MM(c).data;
 }
 
-void STA (CPU *c, int arg) {
-    c->mm[arg] = c->ac;
+void SUB (CPU *c) {
+    c->ac -= CUR_MM(c).data;
 }
 
-void LDA (CPU *c, int arg) {
-    c->ac = c->mm[arg];
+void STA (CPU *c) {
+    c->mm[CUR_MM(c).data].data = c->ac;
 }
 
-void BRA (CPU *c, int arg) {
+void LDA (CPU *c) {
+    c->ac = c->mm[CUR_MM(c).data].data;
 }
 
-void BRZ (CPU *c, int arg) {
+void BRA (CPU *c) {
+    c->pc = CUR_MM(c).data - 1;
 }
 
-void BRP (CPU *c, int arg) {
+void BRZ (CPU *c) {
+    if (c->ac == 0) {
+        c->pc = CUR_MM(c).data - 1;
+    }
 }
 
-void INP (CPU *c, int IGN) {
+void BRP (CPU *c) {
+    if (c->ac >= 0) {
+        c->pc = CUR_MM(c).data - 1;
+    }
+}
+
+void INP (CPU *c) {
     c->ac = getchar();
 }
 
-void OUT (CPU *c, int IGN) {
-    putchar(c->ac);
+void OUT (CPU *c) {
+    putchar((char) c->ac);
 }
 
-void HLT (CPU *c, int IGN) {
-    exit(0);
+void NOP (CPU *c) {
 }
-
-char *inst_str[INST_AMT] = {
-    "ADD",
-    "SUB",
-    "STA",
-    "LDA",
-    "BRA",
-    "BRZ",
-    "BRP",
-    "INP",
-    "OUT",
-    "HLT"
-};
 
 INST_F inst_func[INST_AMT] = {
-    ADD,
-    SUB,
-    STA,
-    LDA,
-    BRA,
-    BRZ,
-    BRP,
-    INP,
-    OUT,
-    HLT
+    HLT, //0
+    ADD, //1
+    SUB, //2
+    STA, //3
+    LDA, //4
+    BRA, //5
+    BRZ, //6
+    BRP, //7
+    INP, //8
+    OUT, //9
+    NOP  //10
 };
 
-void interpret (CPU *c, char *s) {
-    char    comm[8];
-    int     arg = 0;
-    int     i   = 0;
-
-    sscanf(s, "%s %d", comm, &arg);
-    fprintf(stderr, "COMM: %s ARG: %d\n", comm, arg);
-    while (strncmp(inst_str[i], comm, 3)) {
-        i++;
-        if (i >= INST_AMT) return;
-    }
-    (inst_func[i]) (c, arg);
+void exec_inst(CPU *c) {
+    inst_func[CUR_MM(c).op](c);
+    c->pc++;
 }
 
 void init_cpu(CPU *c, int mem_amt) {
-    c->mm = malloc(sizeof(int[mem_amt]));
-    c->ac = 0;
+    c->mm = malloc(sizeof(MAILBOX[mem_amt]));
+    c->mem_amt = mem_amt;
     c->pc = 0;
+    c->ac = 0;
 }
 
+void load_program(CPU *c) {
+    char line[BUFF_LEN];
+    int i = 0;
+    while (fgets(line, BUFF_LEN, stdin) != NULL) {
+        if (!strncmp("END", line, 3)) { break; }
+        c->mm[i].data = 0;
+        sscanf(line, "%d %d", &c->mm[i].op, &c->mm[i].data);
+        i++; 
+        if (i > c->mem_amt) break;
+    }
+}
+
+void print_cpu(CPU *c) {
+    int i;
+    fprintf(stderr, "AC: %d PC: %d\n", c->ac, c->pc);
+    fprintf(stderr, "OP: %d DT: %d\n", CUR_MM(c).op, CUR_MM(c).data);
+    fprintf(stderr, "Memory:\n");
+    for (i = 0; i < c->mem_amt; i++) {
+        fprintf(stderr, " %d %d |", c->mm[i].op, c->mm[i].data);
+        if (!(i % 10) && i != 0) { fprintf(stderr, "\n"); }
+    }
+    fprintf(stderr, "\n");
+}
 
 int main (int argc, char *argv[]) {
-    char line[BUFF_LEN];
     CPU main_cpu;
-
-    init_cpu(&main_cpu, 100);
-
-    while (fgets(line, BUFF_LEN, stdin) != NULL) {
-        interpret(&main_cpu, line);
+    int debug = 0;
+    init_cpu(&main_cpu, 10);
+    load_program(&main_cpu);
+    for (;;) { 
+        if (debug) { print_cpu(&main_cpu); }
+        exec_inst(&main_cpu); 
     }
 }
