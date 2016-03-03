@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "arg.h"
 
 #define INST_AMT 11
 #define BUFF_LEN 32
@@ -9,8 +10,8 @@
 typedef struct s_mbox MAILBOX;
 
 struct s_mbox {
-    int op;
-    int data;
+    unsigned int    op;
+    int             data;
 };
 
 typedef struct s_cpu {
@@ -20,54 +21,19 @@ typedef struct s_cpu {
     int         ac;
 } CPU;
 
+void HLT (CPU *c) { exit(CUR_MM(c).data); }
+void ADD (CPU *c) { c->ac += CUR_MM(c).data; }
+void SUB (CPU *c) { c->ac -= CUR_MM(c).data; }
+void STA (CPU *c) { c->mm[CUR_MM(c).data].data = c->ac; }
+void LDA (CPU *c) { c->ac = c->mm[CUR_MM(c).data].data; }
+void BRA (CPU *c) { c->pc = CUR_MM(c).data - 1; }
+void BRZ (CPU *c) { if (c->ac == 0) { c->pc = CUR_MM(c).data - 1; } }
+void BRP (CPU *c) { if (c->ac >= 0) { c->pc = CUR_MM(c).data - 1; } }
+void INP (CPU *c) { c->ac = getchar(); }
+void OUT (CPU *c) { putchar((char) c->ac); }
+void NOP (CPU *c) { } 
+
 typedef void (*INST_F) (CPU*);
-
-void HLT (CPU *c) {
-    exit(CUR_MM(c).data);
-}
-
-void ADD (CPU *c) {
-    c->ac += CUR_MM(c).data;
-}
-
-void SUB (CPU *c) {
-    c->ac -= CUR_MM(c).data;
-}
-
-void STA (CPU *c) {
-    c->mm[CUR_MM(c).data].data = c->ac;
-}
-
-void LDA (CPU *c) {
-    c->ac = c->mm[CUR_MM(c).data].data;
-}
-
-void BRA (CPU *c) {
-    c->pc = CUR_MM(c).data - 1;
-}
-
-void BRZ (CPU *c) {
-    if (c->ac == 0) {
-        c->pc = CUR_MM(c).data - 1;
-    }
-}
-
-void BRP (CPU *c) {
-    if (c->ac >= 0) {
-        c->pc = CUR_MM(c).data - 1;
-    }
-}
-
-void INP (CPU *c) {
-    c->ac = getchar();
-}
-
-void OUT (CPU *c) {
-    putchar((char) c->ac);
-}
-
-void NOP (CPU *c) {
-}
 
 INST_F inst_func[INST_AMT] = {
     HLT, //0
@@ -84,6 +50,7 @@ INST_F inst_func[INST_AMT] = {
 };
 
 void exec_inst(CPU *c) {
+    if (CUR_MM(c).op >= INST_AMT) exit(1);
     inst_func[CUR_MM(c).op](c);
     c->pc++;
 }
@@ -95,10 +62,10 @@ void init_cpu(CPU *c, int mem_amt) {
     c->ac = 0;
 }
 
-void load_program(CPU *c) {
+void load_program(CPU *c, FILE *in) {
     char line[BUFF_LEN];
     int i = 0;
-    while (fgets(line, BUFF_LEN, stdin) != NULL) {
+    while (fgets(line, BUFF_LEN, in) != NULL) {
         if (!strncmp("END", line, 3)) { break; }
         c->mm[i].data = 0;
         sscanf(line, "%d %d", &c->mm[i].op, &c->mm[i].data);
@@ -122,10 +89,25 @@ void print_cpu(CPU *c) {
 int main (int argc, char *argv[]) {
     CPU main_cpu;
     int debug = 0;
-    init_cpu(&main_cpu, 10);
-    load_program(&main_cpu);
+    int mem = 100;
+    FILE *f = stdin;
+    char *argv0;
+
+    ARGBEGIN {
+        case 'd': debug = 1;                    break;
+        case 'm': mem   = atoi(ARGF());         break;
+        case 'f': f     = fopen(ARGF(), "r");   break;
+        default: break;
+    } ARGEND
+
+    init_cpu(&main_cpu, mem);
+    load_program(&main_cpu, f);
+    if (f != stdin) fclose(f);
+
     for (;;) { 
         if (debug) { print_cpu(&main_cpu); }
         exec_inst(&main_cpu); 
     }
+
+    return 0;
 }
