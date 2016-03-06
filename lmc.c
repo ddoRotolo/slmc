@@ -42,33 +42,19 @@ typedef struct s_cpu {
    an array of function pointers, but it's gone now 
 */
 
-typedef enum e_inst {
-    HLT = 0,
-    ADD,
-    SUB,
-    STA,
-    LDA,
-    BRA,
-    BRZ,
-    BRP,
-    INP,
-    OUT,
-    NOP
-} INST_T;
-
 void exec_inst(CPU *c) {
     switch (CUR_MM(c).op) {
-        case HLT: exit(CUR_MM(c).data);                         break;
-        case ADD: c->ac += CUR_MM(c).data;                      break;
-        case SUB: c->ac -= CUR_MM(c).data;                      break;
-        case STA: c->mm[CUR_MM(c).data].data = c->ac;           break;
-        case LDA: c->ac = c->mm[CUR_MM(c).data].data;           break;
-        case BRA: c->pc = CUR_MM(c).data - 1;                   break;
-        case BRZ: if (c->ac == 0) c->pc = CUR_MM(c).data - 1;   break;
-        case BRP: if (c->ac >= 0) c->pc = CUR_MM(c).data - 1;   break;
-        case INP: c->ac = getchar();                            break;
-        case OUT: putchar((char) c->ac);                        break;
-        case NOP:                                               break;
+        case 0 : exit(CUR_MM(c).data);                          break; //HLT
+        case 1 : c->ac += CUR_MM(c).data;                       break; //ADD
+        case 2 : c->ac -= CUR_MM(c).data;                       break; //SUB
+        case 3 : c->mm[CUR_MM(c).data].data = c->ac;            break; //STA
+        case 4 : c->ac = c->mm[CUR_MM(c).data].data;            break; //LDA
+        case 5 : c->pc = CUR_MM(c).data - 1;                    break; //BRA
+        case 6 : if (c->ac == 0) c->pc = CUR_MM(c).data - 1;    break; //BRZ
+        case 7 : if (c->ac >= 0) c->pc = CUR_MM(c).data - 1;    break; //BRP
+        case 8 : c->ac = getchar();                             break; //INP
+        case 9 : putchar((char) c->ac);                         break; //OUT
+        case 10:                                                break; //NOP
         default: exit(1); //Given an OPCODE that doesn't exist
     }
     c->pc++;
@@ -127,6 +113,4 @@ int main (int argc, char *argv[]) {
         if (debug) { print_cpu(&main_cpu); }
         exec_inst(&main_cpu); 
     }
-
-    return 0;
 }
