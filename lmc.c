@@ -61,7 +61,7 @@ void exec_inst(CPU *c) {
 }
 
 void init_cpu(CPU *c, int mem_amt) {
-    c->mm = malloc(sizeof(MAILBOX[mem_amt]));
+    c->mm = calloc(mem_amt, sizeof(MAILBOX));
     c->mem_amt = mem_amt;
     c->pc = 0;
     c->ac = 0;
