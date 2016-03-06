@@ -72,7 +72,6 @@ void load_program(CPU *c, FILE *in) {
     int i = 0;
     while (fgets(line, BUFF_LEN, in) != NULL) {
         if (!strncmp("END", line, 3)) { break; }
-        c->mm[i].data = 0;
         sscanf(line, "%d %d", &c->mm[i].op, &c->mm[i].data);
         i++; 
         if (i > c->mem_amt) break;
