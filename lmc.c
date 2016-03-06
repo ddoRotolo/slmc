@@ -37,37 +37,40 @@ typedef struct s_cpu {
     int         ac;
 } CPU;
 
-void HLT (CPU *c) { exit(CUR_MM(c).data); }
-void ADD (CPU *c) { c->ac += CUR_MM(c).data; }
-void SUB (CPU *c) { c->ac -= CUR_MM(c).data; }
-void STA (CPU *c) { c->mm[CUR_MM(c).data].data = c->ac; }
-void LDA (CPU *c) { c->ac = c->mm[CUR_MM(c).data].data; }
-void BRA (CPU *c) { c->pc = CUR_MM(c).data - 1; }
-void BRZ (CPU *c) { if (c->ac == 0) { c->pc = CUR_MM(c).data - 1; } }
-void BRP (CPU *c) { if (c->ac >= 0) { c->pc = CUR_MM(c).data - 1; } }
-void INP (CPU *c) { c->ac = getchar(); }
-void OUT (CPU *c) { putchar((char) c->ac); }
-void NOP (CPU *c) { } 
+/* 
+   There used to be a stupid, clever way of adding instructions with 
+   an array of function pointers, but it's gone now 
+*/
 
-typedef void (*INST_F) (CPU*);
-
-INST_F inst_func[INST_AMT] = {
-    HLT, //0
-    ADD, //1
-    SUB, //2
-    STA, //3
-    LDA, //4
-    BRA, //5
-    BRZ, //6
-    BRP, //7
-    INP, //8
-    OUT, //9
-    NOP  //10
-};
+typedef enum e_inst {
+    HLT = 0,
+    ADD,
+    SUB,
+    STA,
+    LDA,
+    BRA,
+    BRZ,
+    BRP,
+    INP,
+    OUT,
+    NOP
+} INST_T;
 
 void exec_inst(CPU *c) {
-    if (CUR_MM(c).op >= INST_AMT) exit(1);
-    inst_func[CUR_MM(c).op](c);
+    switch (CUR_MM(c).op) {
+        case HLT: exit(CUR_MM(c).data);                         break;
+        case ADD: c->ac += CUR_MM(c).data;                      break;
+        case SUB: c->ac -= CUR_MM(c).data;                      break;
+        case STA: c->mm[CUR_MM(c).data].data = c->ac;           break;
+        case LDA: c->ac = c->mm[CUR_MM(c).data].data;           break;
+        case BRA: c->pc = CUR_MM(c).data - 1;                   break;
+        case BRZ: if (c->ac == 0) c->pc = CUR_MM(c).data - 1;   break;
+        case BRP: if (c->ac >= 0) c->pc = CUR_MM(c).data - 1;   break;
+        case INP: c->ac = getchar();                            break;
+        case OUT: putchar((char) c->ac);                        break;
+        case NOP:                                               break;
+        default: exit(1); //Given an OPCODE that doesn't exist
+    }
     c->pc++;
 }
 
