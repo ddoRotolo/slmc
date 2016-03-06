@@ -23,12 +23,10 @@
 #define BUFF_LEN 32
 #define CUR_MM(c) (c->mm[c->pc])
 
-typedef struct s_mbox MAILBOX;
-
-struct s_mbox {
+typedef struct s_mbox {
     unsigned int    op;
     int             data;
-};
+} MAILBOX;
 
 typedef struct s_cpu {
     MAILBOX    *mm;
@@ -92,10 +90,10 @@ void print_cpu(CPU *c) {
 
 int main (int argc, char *argv[]) {
     CPU main_cpu;
-    int debug = 0;
-    int mem = 100;
-    FILE *f = stdin;
+    FILE *f     = stdin;
     char *argv0;
+    int debug   = 0;
+    int mem     = 100;
 
     ARGBEGIN {
         case 'd': debug = 1;                    break;
