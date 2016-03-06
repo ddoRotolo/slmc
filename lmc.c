@@ -59,20 +59,19 @@ void exec_inst(CPU *c) {
 }
 
 void init_cpu(CPU *c, int mem_amt) {
-    c->mm = calloc(mem_amt, sizeof(MAILBOX));
-    c->mem_amt = mem_amt;
-    c->pc = 0;
-    c->ac = 0;
+    c->mm       = calloc(mem_amt, sizeof(MAILBOX));
+    c->pc       = 0;
+    c->ac       = 0;
+    c->mem_amt  = mem_amt;
 }
 
 void load_program(CPU *c, FILE *in) {
     char line[BUFF_LEN];
     int i = 0;
     while (fgets(line, BUFF_LEN, in) != NULL) {
-        if (!strncmp("END", line, 3)) { break; }
+        if (!strncmp("END", line, 3) || (i > c->mem_amt)) break; 
         sscanf(line, "%d %d", &c->mm[i].op, &c->mm[i].data);
         i++; 
-        if (i > c->mem_amt) break;
     }
 }
 
@@ -83,7 +82,7 @@ void print_cpu(CPU *c) {
     fprintf(stderr, "Memory:\n");
     for (i = 0; i < c->mem_amt; i++) {
         fprintf(stderr, " %d %d |", c->mm[i].op, c->mm[i].data);
-        if (!(i % 10) && i != 0) { fprintf(stderr, "\n"); }
+        if (!(i % 10) && i != 0) fprintf(stderr, "\n");
     }
     fprintf(stderr, "\n");
 }
@@ -99,7 +98,7 @@ int main (int argc, char *argv[]) {
         case 'd': debug = 1;                    break;
         case 'm': mem   = atoi(ARGF());         break;
         case 'f': f     = fopen(ARGF(), "r");   break;
-        default: break;
+        default : break;
     } ARGEND
 
     init_cpu(&main_cpu, mem);
@@ -107,7 +106,7 @@ int main (int argc, char *argv[]) {
     if (f != stdin) fclose(f);
 
     for (;;) { 
-        if (debug) { print_cpu(&main_cpu); }
+        if (debug) print_cpu(&main_cpu);
         exec_inst(&main_cpu); 
     }
 }
