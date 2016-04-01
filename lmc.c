@@ -4,7 +4,9 @@
 #include "arg.h"
 
 #define BUFF_LEN 1024
-#define CUR_MM(c) (c->mm[c->pc])
+#define CUR_MM(c)   (c->mm[c->pc])
+#define CUR_INST(c) (CUR_MM(c) % 100)
+#define CUR_DATA(c) (CUR_MM(c) / 100)
 
 typedef struct s_cpu {
     int        *mm;
@@ -13,29 +15,23 @@ typedef struct s_cpu {
     int         ac;
 } CPU;
 
-void exec_inst(CPU *c) {
-    switch (CUR_MM(c) % 100) {
-        case 0 : exit(CUR_MM(c));                                   break; //HLT
-        case 1 : c->ac += CUR_MM(c);                                break; //ADD
-        case 2 : c->ac -= CUR_MM(c);                                break; //SUB
-        case 3 : c->mm[CUR_MM(c)] = c->ac;                          break; //STA
-        case 4 : c->ac = c->mm[CUR_MM(c)];                          break; //LDA
-        case 5 : c->pc = (CUR_MM(c) / 100) - 1;                     break; //BRA
-        case 6 : if (c->ac == 0) c->pc = (CUR_MM(c) / 100) - 1;     break; //BRZ
-        case 7 : if (c->ac >= 0) c->pc = (CUR_MM(c) / 100) - 1;     break; //BRP
-        case 8 : c->ac = getchar();                                 break; //INP
-        case 9 : putchar((char) c->ac);                             break; //OUT
-        case 10:                                                    break; //NOP
-        default: exit(-1); //Given an OPCODE that doesn't exist
-    }
-    c->pc++;
-}
-
 void init_cpu(CPU *c, int mem_amt) {
     c->mm       = calloc(mem_amt, sizeof(int));
+    c->mem_amt  = mem_amt;
     c->pc       = 0;
     c->ac       = 0;
-    c->mem_amt  = mem_amt;
+}
+
+void print_cpu(CPU *c) {
+    int i;
+    fprintf(stderr, "AC: %d PC: %d\n", c->ac, c->pc);
+    fprintf(stderr, "MM: %d\n", CUR_MM(c));
+    fprintf(stderr, "Memory:\n");
+    for (i = 0; i < c->mem_amt; i++) {
+        fprintf(stderr, " %d %d |", c->mm[i]);
+        if (!(i % 10) && i != 0) fprintf(stderr, "\n");
+    }
+    fprintf(stderr, "\n");
 }
 
 void load_program(CPU *c, FILE *in) {
@@ -49,16 +45,22 @@ void load_program(CPU *c, FILE *in) {
     }
 }
 
-void print_cpu(CPU *c) {
-    int i;
-    fprintf(stderr, "AC: %d PC: %d\n", c->ac, c->pc);
-    fprintf(stderr, "MM: %d\n", CUR_MM(c));
-    fprintf(stderr, "Memory:\n");
-    for (i = 0; i < c->mem_amt; i++) {
-        fprintf(stderr, " %d %d |", c->mm[i]);
-        if (!(i % 10) && i != 0) fprintf(stderr, "\n");
+void exec_inst(CPU *c) {
+    switch (CUR_INST(c)) {
+        case 0 : exit(CUR_DATA(c));                             break; //HLT
+        case 1 : c->ac += CUR_DATA(c);                          break; //ADD
+        case 2 : c->ac -= CUR_DATA(c);                          break; //SUB
+        case 3 : c->mm[CUR_DATA(c)] = c->ac;                    break; //STA
+        case 4 : c->ac = c->mm[CUR_DATA(c)];                    break; //LDA
+        case 5 : c->pc = (CUR_DATA(c)) - 1;                     break; //BRA
+        case 6 : if (c->ac == 0) c->pc = (CUR_DATA(c)) - 1;     break; //BRZ
+        case 7 : if (c->ac >= 0) c->pc = (CUR_DATA(c)) - 1;     break; //BRP
+        case 8 : c->ac = getchar();                             break; //INP
+        case 9 : putchar((char) c->ac);                         break; //OUT
+        case 10:                                                break; //NOP
+        default: exit(-1); //Given an OPCODE that doesn't exist
     }
-    fprintf(stderr, "\n");
+    c->pc++;
 }
 
 int main (int argc, char *argv[]) {
