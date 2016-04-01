@@ -42,6 +42,7 @@ void load_program(CPU *c, FILE *in) {
     char line[BUFF_LEN];
     int i = 0;
     while (fgets(line, BUFF_LEN, in) != NULL) {
+        if (line[0] = '#') continue; //Comments
         if (!strncmp("END", line, 3) || (i > c->mem_amt)) break; 
         sscanf(line, "%d", &c->mm[i]);
         i++; 

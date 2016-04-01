@@ -36,22 +36,7 @@ Easy as that!
 
     8
     9
-    5 0
-
-##Notes
-
-In an LMC, the instructions and data are stored on the same strip of memory.
-This is still the case here, however the values stored for the opcodes cannot
-be modified by code running on the LMC itself at the moment.
-
-This is because we store the opcode and data as separate integers, 
-rather than as a single integer.
-
-In practice, this means, you could overwrite the location a BRA instruction jumps to,
-but not overwrite the BRA instruction itself.
-
-This is also why the NOP instruction was added; It allows you to store a value in the
-cell without also having an instruction to run.
+    5 
 
 ##Further modifications
 
