@@ -23,13 +23,8 @@
 #define BUFF_LEN 32
 #define CUR_MM(c) (c->mm[c->pc])
 
-typedef struct s_mbox {
-    unsigned int    op;
-    int             data;
-} MAILBOX;
-
 typedef struct s_cpu {
-    MAILBOX    *mm;
+    int        *mm;
     int         mem_amt;
     int         pc;
     int         ac;
@@ -41,25 +36,25 @@ typedef struct s_cpu {
 */
 
 void exec_inst(CPU *c) {
-    switch (CUR_MM(c).op) {
-        case 0 : exit(CUR_MM(c).data);                          break; //HLT
-        case 1 : c->ac += CUR_MM(c).data;                       break; //ADD
-        case 2 : c->ac -= CUR_MM(c).data;                       break; //SUB
-        case 3 : c->mm[CUR_MM(c).data].data = c->ac;            break; //STA
-        case 4 : c->ac = c->mm[CUR_MM(c).data].data;            break; //LDA
-        case 5 : c->pc = CUR_MM(c).data - 1;                    break; //BRA
-        case 6 : if (c->ac == 0) c->pc = CUR_MM(c).data - 1;    break; //BRZ
-        case 7 : if (c->ac >= 0) c->pc = CUR_MM(c).data - 1;    break; //BRP
-        case 8 : c->ac = getchar();                             break; //INP
-        case 9 : putchar((char) c->ac);                         break; //OUT
-        case 10:                                                break; //NOP
-        default: exit(1); //Given an OPCODE that doesn't exist
+    switch (CUR_MM(c) % 100) {
+        case 0 : exit(CUR_MM(c));                                   break; //HLT
+        case 1 : c->ac += CUR_MM(c);                                break; //ADD
+        case 2 : c->ac -= CUR_MM(c);                                break; //SUB
+        case 3 : c->mm[CUR_MM(c)] = c->ac;                          break; //STA
+        case 4 : c->ac = c->mm[CUR_MM(c)];                          break; //LDA
+        case 5 : c->pc = (CUR_MM(c) / 100) - 1;                     break; //BRA
+        case 6 : if (c->ac == 0) c->pc = (CUR_MM(c) / 100) - 1;     break; //BRZ
+        case 7 : if (c->ac >= 0) c->pc = (CUR_MM(c) / 100) - 1;     break; //BRP
+        case 8 : c->ac = getchar();                                 break; //INP
+        case 9 : putchar((char) c->ac);                             break; //OUT
+        case 10:                                                    break; //NOP
+        default: exit(-1); //Given an OPCODE that doesn't exist
     }
     c->pc++;
 }
 
 void init_cpu(CPU *c, int mem_amt) {
-    c->mm       = calloc(mem_amt, sizeof(MAILBOX));
+    c->mm       = calloc(mem_amt, sizeof(int));
     c->pc       = 0;
     c->ac       = 0;
     c->mem_amt  = mem_amt;
@@ -70,7 +65,7 @@ void load_program(CPU *c, FILE *in) {
     int i = 0;
     while (fgets(line, BUFF_LEN, in) != NULL) {
         if (!strncmp("END", line, 3) || (i > c->mem_amt)) break; 
-        sscanf(line, "%d %d", &c->mm[i].op, &c->mm[i].data);
+        sscanf(line, "%d", &c->mm[i]);
         i++; 
     }
 }
@@ -78,10 +73,10 @@ void load_program(CPU *c, FILE *in) {
 void print_cpu(CPU *c) {
     int i;
     fprintf(stderr, "AC: %d PC: %d\n", c->ac, c->pc);
-    fprintf(stderr, "OP: %d DT: %d\n", CUR_MM(c).op, CUR_MM(c).data);
+    fprintf(stderr, "MM: %d\n", CUR_MM(c));
     fprintf(stderr, "Memory:\n");
     for (i = 0; i < c->mem_amt; i++) {
-        fprintf(stderr, " %d %d |", c->mm[i].op, c->mm[i].data);
+        fprintf(stderr, " %d %d |", c->mm[i]);
         if (!(i % 10) && i != 0) fprintf(stderr, "\n");
     }
     fprintf(stderr, "\n");
