@@ -1,26 +1,9 @@
-/*
-   DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE 
-   Version 2, December 2004 
-
-   Copyright (C) 2004 Sam Hocevar <sam@hocevar.net> 
-
-   Everyone is permitted to copy and distribute verbatim or modified 
-   copies of this license document, and changing it is allowed as long 
-   as the name is changed. 
-
-   DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE 
-   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION 
-
-   0. You just DO WHAT THE FUCK YOU WANT TO.
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "arg.h"
 
-#define INST_AMT 11
-#define BUFF_LEN 32
+#define BUFF_LEN 1024
 #define CUR_MM(c) (c->mm[c->pc])
 
 typedef struct s_cpu {
@@ -29,11 +12,6 @@ typedef struct s_cpu {
     int         pc;
     int         ac;
 } CPU;
-
-/* 
-   There used to be a stupid, clever way of adding instructions with 
-   an array of function pointers, but it's gone now 
-*/
 
 void exec_inst(CPU *c) {
     switch (CUR_MM(c) % 100) {
