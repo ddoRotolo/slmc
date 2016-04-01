@@ -28,8 +28,8 @@ void print_cpu(CPU *c) {
     fprintf(stderr, "MM: %d\n", CUR_MM(c));
     fprintf(stderr, "Memory:\n");
     for (i = 0; i < c->mem_amt; i++) {
-        fprintf(stderr, " %d %d |", c->mm[i]);
-        if (!(i % 10) && i != 0) fprintf(stderr, "\n");
+        fprintf(stderr, " %5d |", c->mm[i]);
+        if (!(i % 5) && i != 0) fprintf(stderr, "\n");
     }
     fprintf(stderr, "\n");
 }
@@ -48,8 +48,8 @@ void load_program(CPU *c, FILE *in) {
 void exec_inst(CPU *c) {
     switch (CUR_INST(c)) {
         case 0 : exit(CUR_DATA(c));                             break; //HLT
-        case 1 : c->ac += CUR_DATA(c);                          break; //ADD
-        case 2 : c->ac -= CUR_DATA(c);                          break; //SUB
+        case 1 : c->ac += c->mm[CUR_DATA(c)];                   break; //ADD
+        case 2 : c->ac -= c->mm[CUR_DATA(c)];                   break; //SUB
         case 3 : c->mm[CUR_DATA(c)] = c->ac;                    break; //STA
         case 4 : c->ac = c->mm[CUR_DATA(c)];                    break; //LDA
         case 5 : c->pc = (CUR_DATA(c)) - 1;                     break; //BRA
